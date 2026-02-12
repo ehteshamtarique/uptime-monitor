@@ -5,6 +5,7 @@ import type { Monitor } from "@/lib/mock-data"
 import { StatusDot } from "@/components/status-badge"
 import { HeartbeatBar } from "@/components/heartbeat-bar"
 import { Search, Plus, ChevronDown } from "lucide-react"
+import { AddMonitorDialog } from "./add-monitor-dialog"
 
 export function MonitorList({
   monitors,
@@ -17,6 +18,12 @@ export function MonitorList({
 }) {
   const [search, setSearch] = useState("")
   const [collapsed, setCollapsed] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+
+  const handleAddMonitor = (newMonitor: Omit<Monitor, "id" | "status" | "uptime24h" | "uptime30d" | "avgPing" | "heartbeat" | "tags" | "responseTimes" | "certificateExpiry">) => {
+    console.log("New monitor to add:", newMonitor)
+    // Here you would typically handle adding the monitor to your state or backend
+  }
 
   const filtered = monitors.filter(
     (m) =>
@@ -37,11 +44,12 @@ export function MonitorList({
               <path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <span className="text-sm font-semibold text-sidebar-foreground">Uptime Kuma</span>
+          <span className="text-sm font-semibold text-sidebar-foreground">Uptime Monitor</span>
         </div>
         <button
           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
           aria-label="Add monitor"
+          onClick={() => setIsAddDialogOpen(true)}
         >
           <Plus size={16} />
         </button>
@@ -113,6 +121,11 @@ export function MonitorList({
           ))}
         </div>
       )}
+      <AddMonitorDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onAddMonitor={handleAddMonitor}
+      />
     </div>
   )
 }

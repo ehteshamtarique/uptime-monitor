@@ -8,7 +8,7 @@ const _geist = Geist({ subsets: ['latin'] })
 const _geistMono = Geist_Mono({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Uptime Kuma',
+  title: 'Uptime Monitor',
   description: 'A self-hosted monitoring tool - Track uptime for all your services',
 }
 

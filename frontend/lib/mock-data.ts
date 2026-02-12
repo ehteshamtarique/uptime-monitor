@@ -1,3 +1,4 @@
+
 export type MonitorStatus = "up" | "down" | "pending" | "maintenance"
 
 export type HeartbeatEntry = {
