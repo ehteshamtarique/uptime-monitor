@@ -27,12 +27,14 @@ function generateHeartbeat(status: MonitorStatus, count = 90): HeartbeatEntry[] 
   const now = Date.now()
   for (let i = count - 1; i >= 0; i--) {
     const time = new Date(now - i * 60000).toISOString()
-    const isDown = status === "down" && i < 5
-    const isMaintenance = status === "maintenance"
-    let entryStatus: MonitorStatus = "up"
-    if (isDown) entryStatus = "down"
-    else if (isMaintenance) entryStatus = "maintenance"
-    else if (Math.random() < 0.02) entryStatus = "down"
+    let entryStatus: MonitorStatus = status; // Use the initial status for consistency
+    
+    // Only apply down or maintenance if explicitly set for the monitor
+    if (status === "down" && i < 5) { // Assuming "down" status applies to the last 5 beats
+      entryStatus = "down";
+    } else if (status === "maintenance") {
+      entryStatus = "maintenance";
+    }
 
     entries.push({
       status: entryStatus,
