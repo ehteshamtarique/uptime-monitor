@@ -8,7 +8,6 @@ from app.core.middlewares import cors_middleware
 from app.exceptions import handler
 
 # apps
-app = FastAPI(lifespan=lifespan.lifespan) # jinja2 templates
 api = FastAPI(lifespan=lifespan.lifespan) # api for json
 
 # custom exception handlers
