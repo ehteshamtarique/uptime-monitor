@@ -19,32 +19,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Monitor } from "@/lib/mock-data"
+import { ApiClient } from "@/src/api-client"
+import { MonitorCreateDTO, MonitorType, MonitorDTO } from "@/src/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 interface AddMonitorDialogProps {
   isOpen: boolean
   onClose: () => void
-  onAddMonitor: (monitor: Omit<Monitor, "id" | "status" | "uptime24h" | "uptime30d" | "avgPing" | "heartbeat" | "tags" | "responseTimes" | "certificateExpiry">) => void
+  onAddMonitor: (monitor: MonitorCreateDTO) => void
 }
 
 export function AddMonitorDialog({ isOpen, onClose, onAddMonitor }: AddMonitorDialogProps) {
-  const [monitorType, setMonitorType] = useState<Monitor["type"]>("HTTP(s)")
+  const [monitorType, setMonitorType] = useState<MonitorType>(MonitorType.HTTP_S_)
   const [name, setName] = useState("")
   const [url, setUrl] = useState("")
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
-  const handleSubmit = () => {
-    // Basic validation
+  const apiClient = new ApiClient()
+
+  const handleSubmit = async () => {
     if (!name || !url) {
-      alert("Please fill in all fields.")
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      })
       return
     }
 
-    onAddMonitor({
-      type: monitorType,
-      name,
-      url,
-    })
-    onClose()
+    setLoading(true)
+    try {
+      const newMonitor: MonitorCreateDTO = {
+        name,
+        url,
+        monitor_type: monitorType,
+      }
+      await apiClient.monitors.createMonitorMonitorPost(newMonitor)
+      toast({
+        title: "Success",
+        description: "Monitor added successfully!",
+      })
+      onAddMonitor(newMonitor) // Pass the new monitor data up
+      onClose()
+    } catch (error) {
+      console.error("Failed to add monitor:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add monitor. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -61,17 +88,14 @@ export function AddMonitorDialog({ isOpen, onClose, onAddMonitor }: AddMonitorDi
             <Label htmlFor="monitor-type" className="text-right">
               Monitor Type
             </Label>
-            <Select value={monitorType} onValueChange={(value: Monitor["type"]) => setMonitorType(value)}>
+            <Select value={monitorType} onValueChange={(value: MonitorType) => setMonitorType(value)}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Select a type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="HTTP(s)">HTTP(s)</SelectItem>
-                <SelectItem value="TCP">TCP</SelectItem>
-                <SelectItem value="Ping">Ping</SelectItem>
-                <SelectItem value="DNS">DNS</SelectItem>
-                <SelectItem value="Docker">Docker</SelectItem>
-                <SelectItem value="Push">Push</SelectItem>
+                {Object.values(MonitorType).map((type) => (
+                  <SelectItem key={type} value={type}>{type}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -101,10 +125,12 @@ export function AddMonitorDialog({ isOpen, onClose, onAddMonitor }: AddMonitorDi
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Save Monitor</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? "Saving..." : "Save Monitor"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

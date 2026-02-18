@@ -1,15 +1,42 @@
 "use client"
 
-import { useState } from "react"
-import { monitors } from "@/lib/mock-data"
+import { useState, useEffect } from "react"
 import { MonitorList } from "@/components/monitor-list"
 import { MonitorDetail } from "@/components/monitor-detail"
 import { DashboardOverview } from "@/components/dashboard-overview"
 import { PanelLeftClose, PanelLeft } from "lucide-react"
+import { ApiClient, MonitorDTO } from "@/src/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export default function Home() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [monitors, setMonitors] = useState<MonitorDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
+
+  const apiClient = new ApiClient()
+
+  useEffect(() => {
+    fetchMonitors()
+  }, [])
+
+  const fetchMonitors = async () => {
+    try {
+      setLoading(true)
+      const fetchedMonitors = await apiClient.monitors.getAllMonitorsMonitorAllGet()
+      setMonitors(fetchedMonitors)
+    } catch (error) {
+      console.error("Failed to fetch monitors:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load monitors. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const selectedMonitor = monitors.find((m) => m.id === selectedId) ?? null
 
@@ -59,7 +86,7 @@ export default function Home() {
         {selectedMonitor ? (
           <MonitorDetail monitor={selectedMonitor} />
         ) : (
-          <DashboardOverview onSelectMonitor={setSelectedId} />
+          <DashboardOverview monitors={monitors} onSelectMonitor={setSelectedId} />
         )}
       </main>
     </div>

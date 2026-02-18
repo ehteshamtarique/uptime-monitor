@@ -42,3 +42,16 @@ class SalaryDb(Base):
     salary_date = mapped_column("salary_date", DateTime())
     updated_at = mapped_column("updated_at", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp())
     created_at = mapped_column("created_at", DateTime(), server_default=current_timestamp())
+
+class MonitorDb(Base):
+    __tablename__ = 'monitors'
+    id = mapped_column("id", Integer, primary_key=True, autoincrement=True)
+    user_id = mapped_column("user_id", Integer, ForeignKey('users.id'))
+    name = mapped_column("name", String)
+    url = mapped_column("url", String)
+    monitor_type = mapped_column("monitor_type", Enum(enums.MonitorType))
+    status = mapped_column("status", Enum(enums.MonitorStatus), default=enums.MonitorStatus.PENDING)
+    interval = mapped_column("interval", Integer, default=60) # seconds
+    timeout = mapped_column("timeout", Integer, default=5) # seconds
+    updated_at = mapped_column("updated_at", DateTime(), server_default=current_timestamp(), server_onupdate=current_timestamp())
+    created_at = mapped_column("created_at", DateTime(), server_default=current_timestamp())

@@ -4,6 +4,8 @@ from pydantic import BaseModel
 from pydantic import Field
 
 from app.models.enums import UserRole
+from app.models.enums import MonitorType
+from app.models.enums import MonitorStatus
 
 # USER
 class UserCreateDTO(BaseModel):
@@ -37,3 +39,23 @@ class UserUpdatePassDTO(BaseModel):
 class Token(BaseModel):
     user_id: int
     role: str
+
+# Monitor
+class MonitorCreateDTO(BaseModel):
+    name: str
+    url: str
+    monitor_type: MonitorType
+    interval: int = Field(default=60, gt=0)
+    timeout: int = Field(default=5, gt=0)
+
+class MonitorDTO(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    url: str
+    monitor_type: MonitorType
+    status: MonitorStatus
+    interval: int
+    timeout: int
+    updated_at: datetime
+    created_at: datetime

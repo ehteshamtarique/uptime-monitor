@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate:api-client": "./scripts/generate-frontend-api-client.sh"
+    "generate:api-client": "dotenv -e .env.local -- ./scripts/generate-frontend-api-client.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -65,6 +65,7 @@
     "@types/node": "^22",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
+    "dotenv-cli": "^11.0.0",
     "openapi-typescript-codegen": "^0.30.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.4.17",

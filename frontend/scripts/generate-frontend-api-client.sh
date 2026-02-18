@@ -5,7 +5,7 @@
 # then uses openapi-typescript-codegen to generate the client.
 
 # --- Configuration ---
-API_URL="http://localhost:8001/api"
+API_URL="${EXTERNAL_API_BASE_URL}/api"
 OPENAPI_SCHEMA_PATH="src/openapi.json"
 OUTPUT_DIR="src/api-client"
 CLIENT_TYPE="fetch"

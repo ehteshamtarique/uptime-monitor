@@ -1,38 +1,62 @@
 "use client"
 
-import { useState } from "react"
-import type { Monitor } from "@/lib/mock-data"
+import { useState, useEffect } from "react"
 import { StatusDot } from "@/components/status-badge"
-import { HeartbeatBar } from "@/components/heartbeat-bar"
 import { Search, Plus, ChevronDown } from "lucide-react"
 import { AddMonitorDialog } from "./add-monitor-dialog"
+import { ApiClient } from "@/src/api-client"
+import { MonitorDTO, MonitorStatus } from "@/src/api-client"
+import { useToast } from "@/hooks/use-toast"
 
 export function MonitorList({
-  monitors,
   selectedId,
   onSelect,
 }: {
-  monitors: Monitor[]
   selectedId: number | null
   onSelect: (id: number) => void
 }) {
   const [search, setSearch] = useState("")
   const [collapsed, setCollapsed] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [monitors, setMonitors] = useState<MonitorDTO[]>([])
+  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
-  const handleAddMonitor = (newMonitor: Omit<Monitor, "id" | "status" | "uptime24h" | "uptime30d" | "avgPing" | "heartbeat" | "tags" | "responseTimes" | "certificateExpiry">) => {
-    console.log("New monitor to add:", newMonitor)
-    // Here you would typically handle adding the monitor to your state or backend
+  const apiClient = new ApiClient()
+
+  useEffect(() => {
+    fetchMonitors()
+  }, [])
+
+  const fetchMonitors = async () => {
+    try {
+      setLoading(true)
+      const fetchedMonitors = await apiClient.monitors.getAllMonitorsMonitorAllGet()
+      setMonitors(fetchedMonitors)
+    } catch (error) {
+      console.error("Failed to fetch monitors:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load monitors. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const filtered = monitors.filter(
+  const handleAddMonitor = (newMonitor: MonitorDTO) => {
+    setMonitors((prevMonitors) => [...prevMonitors, newMonitor])
+  }
+
+  const filteredMonitors = monitors.filter(
     (m) =>
       m.name.toLowerCase().includes(search.toLowerCase()) ||
       m.url.toLowerCase().includes(search.toLowerCase()),
   )
 
-  const upCount = monitors.filter((m) => m.status === "up").length
-  const downCount = monitors.filter((m) => m.status === "down").length
+  const upCount = monitors.filter((m) => m.status === MonitorStatus.UP).length
+  const downCount = monitors.filter((m) => m.status === MonitorStatus.DOWN).length
 
   return (
     <div className="flex h-full flex-col bg-sidebar">
@@ -89,36 +113,43 @@ export function MonitorList({
         onClick={() => setCollapsed(!collapsed)}
       >
         <ChevronDown size={12} className={`transition-transform ${collapsed ? "-rotate-90" : ""}`} />
-        All Monitors ({filtered.length})
+        All Monitors ({filteredMonitors.length})
       </button>
 
       {/* Monitor list */}
       {!collapsed && (
         <div className="flex-1 overflow-y-auto px-1.5 pb-4">
-          {filtered.map((monitor) => (
-            <button
-              key={monitor.id}
-              onClick={() => onSelect(monitor.id)}
-              className={`group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors ${
-                selectedId === monitor.id
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-              }`}
-            >
-              <StatusDot status={monitor.status} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-medium">{monitor.name}</span>
-                  {monitor.status === "up" && (
-                    <span className="shrink-0 text-xs text-muted-foreground">{monitor.avgPing}ms</span>
-                  )}
+          {loading ? (
+            <p className="text-center text-muted-foreground">Loading monitors...</p>
+          ) : filteredMonitors.length === 0 ? (
+            <p className="text-center text-muted-foreground">No monitors found.</p>
+          ) : (
+            filteredMonitors.map((monitor) => (
+              <button
+                key={monitor.id}
+                onClick={() => onSelect(monitor.id)}
+                className={`group flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors ${
+                  selectedId === monitor.id
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                }`}
+              >
+                {/* <StatusDot status={monitor.status} /> */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-sm font-medium">{monitor.name}</span>
+                    {/* avgPing and heartbeat are not directly available in MonitorDTO */}
+                    {/* {monitor.status === "up" && (
+                      <span className="shrink-0 text-xs text-muted-foreground">{monitor.avgPing}ms</span>
+                    )} */}
+                  </div>
+                  {/* <div className="mt-1">
+                    <HeartbeatBar heartbeat={monitor.heartbeat.slice(-45)} slim />
+                  </div> */}
                 </div>
-                <div className="mt-1">
-                  <HeartbeatBar heartbeat={monitor.heartbeat.slice(-45)} slim />
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       )}
       <AddMonitorDialog
